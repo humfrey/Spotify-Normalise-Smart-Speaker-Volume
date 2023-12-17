@@ -47,7 +47,7 @@ async function getCurrentlyPlaying(accessToken) {
 async function getSonosVolume(accessToken) {    
 try {
     const response = await axios.get(
-        `https://api.ws.sonos.com/control/api/v1/players/RINCON_38420BFB36A401400/playerVolume/`, 
+        `https://api.ws.sonos.com/control/api/v1/players/${sonosDevice}/playerVolume/`, 
         {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,

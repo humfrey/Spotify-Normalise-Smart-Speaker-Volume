@@ -9,6 +9,7 @@ const app = express();
 const port = 3000;
 
 const sonosDevice = process.env.SONOS_DEVICE_ID
+const sonosDeviceName = process.env.SONOS_DEVICE_NAME
 
 let suppressHeadlessModeUntil = 0;
 let nextRefresh = Date.now() + 10000;
@@ -101,7 +102,7 @@ async function setNormalisedVolume() {
         let currentLoudness = await getLoudness(currentlyPlayingTrack, spotifyAccessToken);
 
 
-        if (deviceName == "TV Room") { // To set the volume on Sonos speaker, need to use the Sonos API
+        if (deviceName == sonosDeviceName) { // To set the volume on Sonos speaker, need to use the Sonos API
 
 
             if ((lastSetVolume == null) || (Math.abs(lastSetVolume - sonosVolume) > 2)) {

@@ -3,7 +3,7 @@ const axios = require('axios');
 async function setSonosVolume(volume, accessToken) {
     try {
         const response = await axios.post(
-            `https://api.ws.sonos.com/control/api/v1/players/RINCON_38420BFB36A401400/playerVolume/`, 
+            `https://api.ws.sonos.com/control/api/v1/players/${sonosDevice}/playerVolume/`, 
             { 'volume': volume }, // Pass the volume directly here
             {
                 headers: {
