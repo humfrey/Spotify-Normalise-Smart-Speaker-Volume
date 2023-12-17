@@ -89,7 +89,7 @@ async function setNormalisedVolume() {
             await refreshSpotifyToken();
         }
 
-        if (sonosAccessToken && Date.now() > sonosTokenExpiry - 300000) { // 5 minutes buffer
+        if (sonosAccessToken && Date.now() > sonosTokenExpiry - 300000) { // 5 minutes buffer 
             await refreshSonosToken();
         }
 
@@ -258,6 +258,9 @@ async function refreshSpotifyToken() {
 
         spotifyAccessToken = response.data.access_token;
         spotifyTokenExpiry = Date.now() + (response.data.expires_in * 1000);
+
+        console.log('Spotify token refreshed successfully');
+
     } catch (error) {
         console.error('Error refreshing Spotify token', error);
     }
@@ -280,6 +283,10 @@ async function refreshSonosToken() {
 
         sonosAccessToken = response.data.access_token;
         sonosTokenExpiry = Date.now() + (response.data.expires_in * 1000);
+
+        console.log('Sonos token refreshed successfully');
+
+        
     } catch (error) {
         console.error('Error refreshing Sonos token', error);
     }
