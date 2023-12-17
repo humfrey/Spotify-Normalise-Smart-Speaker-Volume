@@ -150,7 +150,7 @@ async function setNormalisedVolume() {
         }
         return response;
     }
-}
+} 
 
 function calculateVolumeAdjustment(currentTrackLoudness, referenceTrackVolume, referenceTrackLoudness = -18, scalingConstant = 0.25) {
     let loudnessDifference = (currentTrackLoudness - referenceTrackLoudness) * scalingConstant;
