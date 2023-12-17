@@ -8,25 +8,26 @@ const axios = require('axios');
 const app = express();
 const port = 3000;
 
-let spotifyAccessToken = null;
-let sonosAccessToken = null;
+const sonosDevice = process.env.SONOS_DEVICE_ID
 
 let suppressHeadlessModeUntil = 0;
 let nextRefresh = Date.now() + 10000;
-
-let spotifyRefreshToken = null;
-let spotifyTokenExpiry = null;
-let sonosRefreshToken = null;
-let sonosTokenExpiry = null;
 
 let desiredVolume = null;
 let nominalLoudness = null;
 let lastSetVolume = null;
 
+let spotifyAccessToken = null;
+let sonosAccessToken = null;
+let spotifyRefreshToken = null;
+let spotifyTokenExpiry = null;
+let sonosRefreshToken = null;
+let sonosTokenExpiry = null;
+
 app.get('/', async (req, res) => {
     suppressHeadlessModeUntil = Date.now() + 15000
 
-    
+
     response = await setNormalisedVolume();
 
     let autoRefreshHTML = `
@@ -34,7 +35,7 @@ app.get('/', async (req, res) => {
       <head>
         <title>Countdown and Refresh</title>
         <script type="text/javascript">
-          var timeLeft = ${nextRefresh -  Date.now()};
+          var timeLeft = ${nextRefresh - Date.now()};
 
           function updateCountdown() {
             document.getElementById('countdown').innerText = timeLeft + ' ms remaining';
@@ -49,11 +50,11 @@ app.get('/', async (req, res) => {
         </script>
       </head>
       <body>
-        <p id="countdown">${nextRefresh -  Date.now()} ms remaining</p>
+        <p id="countdown">${nextRefresh - Date.now()} ms remaining</p>
       
   `;
 
-  res.send(`${autoRefreshHTML} ${response} </body></html>`)
+    res.send(`${autoRefreshHTML} ${response} </body></html>`)
 });
 
 headlessUpdate();
@@ -61,10 +62,10 @@ headlessUpdate();
 
 async function headlessUpdate() {
     console.log(`\n\n--------\n--------\n--------\n\n`)
-    console.log(`Suppress headless mode for : ${suppressHeadlessModeUntil - Date.now()}`)    
+    console.log(`Suppress headless mode for : ${suppressHeadlessModeUntil - Date.now()}`)
 
-    if (suppressHeadlessModeUntil < Date.now()) { 
-        console.log(await setNormalisedVolume()) 
+    if (suppressHeadlessModeUntil < Date.now()) {
+        console.log(await setNormalisedVolume())
     }
 
     let delay = Math.max(500, nextRefresh - Date.now(), suppressHeadlessModeUntil - Date.now()); // delay in milliseconds
@@ -75,8 +76,8 @@ async function headlessUpdate() {
         headlessUpdate()
     }, delay);
 };
-  
-async function setNormalisedVolume() {    
+
+async function setNormalisedVolume() {
     if (spotifyAccessToken == null) {
         nextRefresh = Date.now() + 10000;
         return `Visit <a href="/spotify-login">/spotify-login</a> to login to Spotify`;
@@ -100,7 +101,7 @@ async function setNormalisedVolume() {
         let currentLoudness = await getLoudness(currentlyPlayingTrack, spotifyAccessToken);
 
 
-        if (deviceName == "TV Room") {
+        if (deviceName == "TV Room") { // To set the volume on Sonos speaker, need to use the Sonos API
 
 
             if ((lastSetVolume == null) || (Math.abs(lastSetVolume - sonosVolume) > 2)) {
@@ -122,7 +123,7 @@ async function setNormalisedVolume() {
                 response = (`Reference loudness: ${nominalLoudness} <br> Reference volume: ${desiredVolume} <br><br> Current track loudness: ${currentLoudness} <br> <br> Previous volume: ${sonosVolume} <br> Proposed volume: ${newVolume}`);
             }
 
-        } else if (deviceType == "Speaker") {
+        } else if (deviceType == "Speaker") { // Other smart speakers like Alexa can have volume set via Spotify API
 
             if ((lastSetVolume == null) || (Math.abs(lastSetVolume - spotifyVolume) > 2)) {
 
@@ -136,7 +137,7 @@ async function setNormalisedVolume() {
 
             } else {
                 let newVolume = calculateVolumeAdjustment(currentLoudness, desiredVolume, nominalLoudness, 0.25);
-                
+
                 if (newVolume != spotifyVolume) {
                     setSpotifyVolume(newVolume, spotifyAccessToken);
                     lastSetVolume = newVolume;
@@ -150,7 +151,7 @@ async function setNormalisedVolume() {
         }
         return response;
     }
-} 
+}
 
 function calculateVolumeAdjustment(currentTrackLoudness, referenceTrackVolume, referenceTrackLoudness = -18, scalingConstant = 0.25) {
     let loudnessDifference = (currentTrackLoudness - referenceTrackLoudness) * scalingConstant;
@@ -167,15 +168,13 @@ function calculateVolumeAdjustment(currentTrackLoudness, referenceTrackVolume, r
 ////////////////        OAUTH CODE          //////////////
 ////////////////                            //////////////
 
+
 const spotifyClientId = process.env.SPOTIFY_CLIENT_ID;
 const spotifyClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 const sonosClientId = process.env.SONOS_CLIENT_ID;
 const sonosClientSecret = process.env.SONOS_CLIENT_SECRET;
 const spotifyRedirectUri = 'http://localhost:3000/spotify-callback';
 const sonosRedirectUri = 'http://localhost:3000/sonos-callback';
-
-sonosHousehold = "Sonos_UKtdHbIBOdY9F6IUEczhXmqowZ.yTmU1l66VHYfwwHtcPkK"
-sonosDevice = "RINCON_38420BFB36A401400"
 
 app.get('/spotify-login', (req, res) => {
     const scope = 'user-modify-playback-state user-read-private user-read-email user-read-playback-state user-read-currently-playing';
