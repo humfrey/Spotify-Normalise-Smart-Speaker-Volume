@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { getCurrentlyPlaying, getSonosVolume } = require('./modules/getcurrentlyplaying');
-const getLoudness = require('./modules/getloudness');
 const { setSonosVolume, setSpotifyVolume } = require('./modules/setvolume');
 
 const express = require('express');
@@ -17,6 +16,9 @@ let nextRefresh = Date.now() + 10000;
 let desiredVolume = null;
 let nominalLoudness = null;
 let lastSetVolume = null;
+
+let lastSeenTrack = 0;
+let lastSeenLoudness = null;
 
 let spotifyAccessToken = null;
 let sonosAccessToken = null;
@@ -39,7 +41,7 @@ app.get('/', async (req, res) => {
           var timeLeft = ${nextRefresh - Date.now()};
 
           function updateCountdown() {
-            document.getElementById('countdown').innerText = timeLeft + ' ms remaining';
+            document.getElementById('countdown').innerText = 'Refresh in ' + timeLeft + ' ms';
             timeLeft=timeLeft-1000;
 
             if (timeLeft < 0) {
@@ -51,27 +53,30 @@ app.get('/', async (req, res) => {
         </script>
       </head>
       <body>
-        <p id="countdown">${nextRefresh - Date.now()} ms remaining</p>
+        <p id="countdown">Refresh in ${nextRefresh - Date.now()} ms</p>
       
   `;
-
-    res.send(`${autoRefreshHTML} ${response} </body></html>`)
+    console.log(response)
+    console.log(`Next web refresh in : ${nextRefresh - Date.now()}`)
+    res.send(`${autoRefreshHTML} ${response.replace(/\n/g, "<br>")} </body></html>`)
 });
 
 headlessUpdate();
 
 
 async function headlessUpdate() {
-    console.log(`\n\n--------\n--------\n--------\n\n`)
-    console.log(`Suppress headless mode for : ${suppressHeadlessModeUntil - Date.now()}`)
 
     if (suppressHeadlessModeUntil < Date.now()) {
         console.log(await setNormalisedVolume())
+    } else {
+        console.log(`Suppress headless mode for : ${suppressHeadlessModeUntil - Date.now()}`)
     }
 
     let delay = Math.max(500, nextRefresh - Date.now(), suppressHeadlessModeUntil - Date.now()); // delay in milliseconds
 
-    console.log(`Next refresh in : ${delay}`)
+    if (suppressHeadlessModeUntil < Date.now()) {
+        console.log(`Next headless refresh in : ${delay}`)
+    }
 
     setTimeout(() => {
         headlessUpdate()
@@ -94,16 +99,22 @@ async function setNormalisedVolume() {
             await refreshSonosToken();
         }
 
-        let { currentlyPlayingTrack, deviceName, spotifyVolume, currentTrackEndTimestamp, deviceType } = await getCurrentlyPlaying(spotifyAccessToken);
+        let { currentlyPlayingTrack, deviceName, spotifyVolume, currentTrackEndTimestamp, deviceType, isPlaying, currentLoudness } = await getCurrentlyPlaying(spotifyAccessToken, lastSeenTrack, lastSeenLoudness);
 
-        nextRefresh = Math.min(10000 + Date.now(), currentTrackEndTimestamp + 500);
+        lastSeenLoudness = currentLoudness;
+        lastSeenTrack = currentlyPlayingTrack;
 
-        let sonosVolume = await getSonosVolume(sonosAccessToken);
-        let currentLoudness = await getLoudness(currentlyPlayingTrack, spotifyAccessToken);
+        if (isPlaying) {
+            nextRefresh = Math.min(10000 + Date.now(), currentTrackEndTimestamp + 500);
+        }
 
+        if (!isPlaying) {
+            nextRefresh = Date.now() + 300000;
+        }
 
         if (deviceName == sonosDeviceName) { // To set the volume on Sonos speaker, need to use the Sonos API
 
+            let sonosVolume = await getSonosVolume(sonosAccessToken);
 
             if ((lastSetVolume == null) || (Math.abs(lastSetVolume - sonosVolume) > 2)) {
 
@@ -119,9 +130,13 @@ async function setNormalisedVolume() {
                 if (newVolume != sonosVolume) {
                     setSonosVolume(newVolume, sonosAccessToken);
                     lastSetVolume = newVolume;
+
+                    response = (`Reference loudness: ${nominalLoudness} \nReference volume: ${desiredVolume} \n\nCurrent track loudness: ${currentLoudness} \n\nPrevious volume: ${sonosVolume} \nProposed volume: ${newVolume}`);
+                } else {
+                    response = ``
                 }
                 lastSetVolume = newVolume;
-                response = (`Reference loudness: ${nominalLoudness} <br> Reference volume: ${desiredVolume} <br><br> Current track loudness: ${currentLoudness} <br> <br> Previous volume: ${sonosVolume} <br> Proposed volume: ${newVolume}`);
+                
             }
 
         } else if (deviceType == "Speaker") { // Other smart speakers like Alexa can have volume set via Spotify API
@@ -142,8 +157,13 @@ async function setNormalisedVolume() {
                 if (newVolume != spotifyVolume) {
                     setSpotifyVolume(newVolume, spotifyAccessToken);
                     lastSetVolume = newVolume;
+
+                    response = (`Reference loudness: ${nominalLoudness} \nReference volume: ${desiredVolume} \n\nCurrent track loudness: ${currentLoudness} \n\nPrevious volume: ${spotifyVolume} \nNew volume: ${newVolume}`);
+
+                }   else {
+                    response = ``
                 }
-                response = (`Reference loudness: ${nominalLoudness} <br> Reference volume: ${desiredVolume} <br><br> Current track loudness: ${currentLoudness} <br><br> Previous volume: ${spotifyVolume} <br> New volume: ${newVolume}`);
+
             }
 
 
@@ -160,7 +180,6 @@ function calculateVolumeAdjustment(currentTrackLoudness, referenceTrackVolume, r
     let adjustedLinearVolume = (referenceTrackVolume / 100) * adjustmentFactor;
     let adjustedVolumePercentage = Math.min(Math.max(adjustedLinearVolume * 100, 0), 100);     // Convert the adjusted volume back to a percentage scale
 
-    console.log("Calculated volume", adjustedVolumePercentage.toFixed(0))
     return adjustedVolumePercentage.toFixed(0);
 }
 
