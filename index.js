@@ -9,6 +9,7 @@ const port = 3000;
 
 const sonosDevice = process.env.SONOS_DEVICE_ID
 const sonosDeviceName = process.env.SONOS_DEVICE_NAME
+const baseURL = process.env.BASE_URL
 
 let suppressHeadlessModeUntil = 0;
 let nextRefresh = Date.now() + 10000;
@@ -193,8 +194,8 @@ const spotifyClientId = process.env.SPOTIFY_CLIENT_ID;
 const spotifyClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 const sonosClientId = process.env.SONOS_CLIENT_ID;
 const sonosClientSecret = process.env.SONOS_CLIENT_SECRET;
-const spotifyRedirectUri = 'http://localhost:3000/spotify-callback';
-const sonosRedirectUri = 'http://localhost:3000/sonos-callback';
+const spotifyRedirectUri = baseURL + '/spotify-callback';
+const sonosRedirectUri = baseURL + '/sonos-callback';
 
 app.get('/spotify-login', (req, res) => {
     const scope = 'user-modify-playback-state user-read-private user-read-email user-read-playback-state user-read-currently-playing';
@@ -316,6 +317,6 @@ async function refreshSonosToken() {
 
 
 app.listen(port, () => {
-    console.log(`Listening at http://localhost:${port}`);
+    console.log(`Listening at ${baseURL}`);
 });
 
