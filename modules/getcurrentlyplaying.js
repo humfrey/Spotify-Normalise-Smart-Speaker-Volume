@@ -58,7 +58,7 @@ async function getCurrentlyPlaying(accessToken, lastSeenTrack, lastSeenLoudness)
     }
 }
 
-async function getSonosVolume(accessToken) {    
+async function getSonosVolume(sonosDevice, accessToken) {    
 try {
     const response = await axios.get(
         `https://api.ws.sonos.com/control/api/v1/players/${sonosDevice}/playerVolume/`, 

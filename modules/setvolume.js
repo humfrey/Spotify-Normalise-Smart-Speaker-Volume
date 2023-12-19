@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-async function setSonosVolume(volume, accessToken) {
+async function setSonosVolume(volume, sonosDevice, accessToken) {
     try {
         const response = await axios.post(
             `https://api.ws.sonos.com/control/api/v1/players/${sonosDevice}/playerVolume/`, 

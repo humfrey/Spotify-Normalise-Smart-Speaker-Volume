@@ -114,7 +114,7 @@ async function setNormalisedVolume() {
 
         if (deviceName == sonosDeviceName) { // To set the volume on Sonos speaker, need to use the Sonos API
 
-            let sonosVolume = await getSonosVolume(sonosAccessToken);
+            let sonosVolume = await getSonosVolume(sonosDevice, sonosAccessToken);
 
             if ((lastSetVolume == null) || (Math.abs(lastSetVolume - sonosVolume) > 2)) {
 
@@ -128,7 +128,7 @@ async function setNormalisedVolume() {
             } else {
                 let newVolume = calculateVolumeAdjustment(currentLoudness, desiredVolume, nominalLoudness, 0.25);
                 if (newVolume != sonosVolume) {
-                    setSonosVolume(newVolume, sonosAccessToken);
+                    setSonosVolume(newVolume, sonosDevice, sonosAccessToken);
                     lastSetVolume = newVolume;
 
                     response = (`Reference loudness: ${nominalLoudness} \nReference volume: ${desiredVolume} \n\nCurrent track loudness: ${currentLoudness} \n\nPrevious volume: ${sonosVolume} \nProposed volume: ${newVolume}`);
