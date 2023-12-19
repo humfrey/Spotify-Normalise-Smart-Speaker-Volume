@@ -102,11 +102,10 @@ async function setNormalisedVolume() {
 
         let { currentlyPlayingTrack, deviceName, spotifyVolume, currentTrackEndTimestamp, deviceType, isPlaying, currentLoudness } = await getCurrentlyPlaying(spotifyAccessToken, lastSeenTrack, lastSeenLoudness);
 
-        lastSeenLoudness = currentLoudness;
-        lastSeenTrack = currentlyPlayingTrack;
-
         if (isPlaying) {
             nextRefresh = Math.min(10000 + Date.now(), currentTrackEndTimestamp + 500);
+            lastSeenLoudness = currentLoudness;
+            lastSeenTrack = currentlyPlayingTrack;
         }
 
         if (!isPlaying) {

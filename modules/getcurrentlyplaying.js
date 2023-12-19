@@ -43,6 +43,15 @@ async function getCurrentlyPlaying(accessToken, lastSeenTrack, lastSeenLoudness)
               };
         } else {
             console.log('No track currently playing.');
+            return {
+                currentlyPlayingTrack: 0,
+                deviceName: null,
+                spotifyVolume: null,
+                currentTrackEndTimestamp: null,
+                deviceType: null,
+                isPlaying: false,
+                currentLoudness: null
+              };
         }
     } catch (error) {
         console.error('Error fetching currently playing track:', error.message);
