@@ -1,7 +1,7 @@
-# Spotify Normalize Smart Speaker Volume
+# Spotify Normalise Smart Speaker Volume
 
 ## Overview
-Spotify-Normalize-Smart-Speaker-Volume is a Node.js app to normalize the volume of Spotify music playback on smart speakers. It can also use the Sonos API to normalise volume when Spotify is playing via Sonos speakers (Sonos speaker volume can't be controlled via Spotify API)
+Spotify-Normalise-Smart-Speaker-Volume is a Node.js app to Normalise the volume of Spotify music playback on smart speakers. It can also use the Sonos API to normalise volume when Spotify is playing via Sonos speakers (Sonos speaker volume can't be controlled via Spotify API)
 
 This is hacked together for my personal use and almost certainly won't work for you out-of-the-box. But may make a useful starting point if you have the same problem. This application is not affiliated with Spotify.
 
